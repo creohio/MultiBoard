@@ -85,6 +85,9 @@ footer{text-align:center;padding:16px;color:#64748b;font-size:12px}
     <div class="title">
       <span id="mainTitle">Production Flow Board — Grid Tiles</span>
       <span class="status" id="netStatus"><span class="dot bad" id="dot"></span><span id="statusText">Offline</span></span>
+<button id="exportStateBtn" class="btn secondary" type="button">Export Board</button>
+<button id="importStateBtn" class="btn secondary" type="button">Import Board</button>
+ <button id="exportSnapshotBtn" class="btn secondary" type="button">Download Snapshot CSV</button>
     </div>
     
   </header>
@@ -109,7 +112,9 @@ footer{text-align:center;padding:16px;color:#64748b;font-size:12px}
     <div class="keyitem"><span class="sw green"></span> Green — Stocked</div>
     <div class="keyitem"><span class="sw yellow"></span> Yellow — In Progress</div>
     <div class="keyitem"><span class="sw white"></span> White — Unused</div>
-    <button id="exportSnapshotBtn" class="btn secondary" type="button">Download Snapshot CSV</button>
+   
+
+<input id="importStateFile" type="file" accept=".json" hidden />
     <button id="manageBoardBtn" class="btn secondary" type="button">Manage Boards</button>
     <span id="boardLinks"></span>
   </div>
@@ -1033,6 +1038,17 @@ function setSelectedCardsStatus(status){
   }
   document.getElementById('exportSnapshotBtn').addEventListener('click', exportSnapshotCSV);
   document.getElementById('exportCsvBtn').addEventListener('click', exportSnapshotCSV);
+document.getElementById('exportStateBtn').addEventListener('click', exportBoardState);
+
+document.getElementById('importStateBtn').addEventListener('click', () => {
+  document.getElementById('importStateFile').click();
+});
+
+document.getElementById('importStateFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  importBoardStateFromFile(file);
+  e.target.value = '';
+});
 
   function openManager(){
     mgrBoardKey.value = boardKey;
@@ -1253,7 +1269,59 @@ document.getElementById('deleteBoardBtn').addEventListener('click', () => {
     render();
     connect();
   }
+function exportBoardState(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    boardKey,
+    state
+  };
 
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: 'application/json;charset=utf-8;'
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${boardKey}_board_backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importBoardStateFromFile(file){
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+
+      if (!parsed || typeof parsed !== 'object' || !parsed.state) {
+        alert('Invalid backup file.');
+        return;
+      }
+
+      if (!confirm('Import this board backup? This will overwrite the current board state.')) {
+        return;
+      }
+
+      state = normalizeState(parsed.state);
+      rebuildLookups();
+      updateHeader();
+      populateAddSelectors();
+      render();
+      saveSoon();
+
+      alert('Board imported successfully.');
+    } catch (err) {
+      alert('Could not import file. Make sure it is a valid JSON backup.');
+    }
+  };
+
+  reader.readAsText(file);
+}
   init();
 })();
 </script>
