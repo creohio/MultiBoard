@@ -1,0 +1,1365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Unified Production Flow Board</title>
+<style>
+:root{
+  --panel:#ffffff; --muted:#64748b; --text:#0f172a; --ring:#94a3b8;
+  --green:#16a34a; --red:#ef4444; --yellow:#f59e0b; --gray:#cbd5e1;
+  --card:#f8fafc; --ink:#0f172a; --blue:#2563eb;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f1f5f9;color:#0f172a}
+.top-banner{width:100%;text-align:center;font-size:32px;font-weight:900;padding:18px 0;background:#1e3a8a;color:#fff;border-bottom:4px solid #0f172a;letter-spacing:1px}
+header{padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.title{font-size:18px;font-weight:700;display:flex;gap:10px;align-items:center}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #e2e8f0;background:#fff}
+.dot{width:8px;height:8px;border-radius:50%}.dot.ok{background:#10b981}.dot.warn{background:#f59e0b}.dot.bad{background:#ef4444}
+.muted{color:#0f172a;font-size:12px;background:#e0f2fe;border:1px solid #bae6fd;padding:6px 8px;border-radius:8px}
+.wrap{padding:0 24px 24px}
+.tabs{display:flex;gap:8px;margin:0 24px 8px;align-items:center;flex-wrap:wrap}
+.tab{padding:8px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:14px}
+.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.panel{display:none}.panel.active{display:block}
+.selbar{display:flex;gap:8px;align-items:center;margin-left:auto}
+.toggle{padding:8px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:13px}
+.toggle.on{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.badge-sel{background:#111827;color:#fff;border-radius:999px;padding:3px 8px;font-size:12px}
+.btn{background:#0f172a;color:#fff;border:none;border-radius:10px;padding:6px 10px;font-size:12px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.secondary{background:#e2e8f0;color:#0f172a}.btn.muted{background:#6b7280;color:#fff}.btn.ok{background:#10b981;color:#fff}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.keybar{display:flex;gap:10px;align-items:center;margin:6px 24px 12px;flex-wrap:wrap}
+.keyitem{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e2e8f0;padding:6px 10px;border-radius:999px;font-size:12px}
+.sw{width:14px;height:14px;border-radius:4px;border:1px solid #475569;background:#fff}.sw.red{background:#ef4444}.sw.green{background:#22c55e}.sw.yellow{background:#f59e0b}.sw.white{background:#fff}
+.addbar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin:8px 24px 12px}
+.group{display:flex;gap:6px;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:8px}
+.group label{font-size:12px;color:#334155}.group input,.group select{border:1px solid #cbd5e1;border-radius:8px;padding:6px 8px;font-size:14px;background:#fff}.group input[type="number"]{width:90px}.group select{min-width:160px}.group .checkbox{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#334155}
+.locations{display:grid;gap:24px;justify-content:center;grid-template-columns:repeat(auto-fit,minmax(350px,420px))}
+.location{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.loc-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.loc-title{font-weight:700;font-size:16px}
+.loc-tools{display:flex;align-items:center;gap:10px}.thresh{width:80px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px}
+.loc-ind{padding:6px 12px;border-radius:999px;font-weight:800;font-size:13px;color:#fff;min-width:92px;text-align:center}.loc-ind.good{background:#16a34a}.loc-ind.bad{background:#ef4444}
+.badge{background:#0f172a;color:#fff;border-radius:999px;padding:2px 8px;font-size:12px}.small{font-size:12px;color:#475569}
+.sections{display:flex;flex-direction:column;gap:12px}.section{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;color:#0f172a;font-weight:600}
+.section-title{display:flex;align-items:center;gap:8px}.section-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.list{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(22px,1fr));min-height:28px}
+.tile{width:22px;height:22px;border-radius:4px;border:1px solid #475569;background:#f8fafc;cursor:grab;user-select:none;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700;line-height:1;font-size:10px}
+.tile.ready{background:#22c55e}.tile.issue{background:#ef4444}.tile.progress{background:#facc15}.tile.empty{background:#f8fafc}.tile.dragging{opacity:.6}.tile:active{cursor:grabbing}
+.tile.selected{outline:2px solid #2563eb;outline-offset:-1px;box-shadow:0 0 0 2px rgba(37,99,235,.25) inset}
+.tile .x{display:none}.tile:hover .x{display:block;position:absolute;right:-6px;top:-6px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:10px;padding:0 3px;cursor:pointer}
+.issues{display:flex;flex-direction:column;gap:10px}.issues-header{display:flex;gap:12px;align-items:center;margin:0 24px}.issues-total{background:#fff;border:1px solid #e2e8f0;padding:6px 10px;border-radius:10px;font-weight:600}
+.issues-table{display:flex;flex-direction:column;gap:8px;margin:0 24px 8px}.issues-row{display:grid;grid-template-columns:100px 120px 200px 1fr 110px;gap:10px;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px}.issues-row.head{background:transparent;border:none;font-weight:700;padding:0 10px}.issue-note{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:6px 8px;font-size:14px;background:#fff}
+.log{display:flex;flex-direction:column;gap:10px}.log-header{display:flex;gap:10px;align-items:center;margin:0 24px}.log-header .btn{padding:8px 12px}.log-table{display:flex;flex-direction:column;gap:8px;margin:0 24px 8px}.log-row{display:grid;grid-template-columns:120px 1fr 1fr 90px;gap:10px;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px}.log-row.head{background:transparent;border:none;font-weight:700;padding:0 10px}
+footer{text-align:center;padding:16px;color:#64748b;font-size:12px}
+#panel-board{position:relative}.marquee{position:absolute;border:1px dashed #2563eb;background:rgba(37,99,235,.1);pointer-events:none;z-index:50}
+
+.manager-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:24px;z-index:1000}
+.manager-modal[hidden]{display:none !important;}
+.manager-card{width:min(1100px,96vw);max-height:90vh;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(15,23,42,.25)}
+.manager-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.manager-head-inline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.manager-title{font-size:20px;font-weight:800}
+.manager-grid{display:grid;grid-template-columns:320px 1fr;gap:16px}
+.manager-panel{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
+.manager-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.manager-row label{font-size:12px;color:#334155;min-width:72px}
+.manager-row input{flex:1;min-width:180px;border:1px solid #cbd5e1;border-radius:8px;padding:6px 8px;background:#fff}
+.location-editor-list{display:flex;flex-direction:column;gap:12px}
+.editor-location{background:#fff;border:1px solid #dbe5ef;border-radius:12px;padding:12px}
+.editor-location-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.editor-location-head input{flex:1;min-width:180px;border:1px solid #cbd5e1;border-radius:8px;padding:6px 8px}
+.editor-section-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.editor-section{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:8px;align-items:center}
+.editor-section input{border:1px solid #cbd5e1;border-radius:8px;padding:6px 8px;background:#fff}
+.section.over-limit{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.10) inset}
+#boardLinks{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:900px){.manager-grid{grid-template-columns:1fr}.editor-section{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="top-banner" id="topBanner">Unified Board</div>
+  <header>
+    <div class="title">
+      <span id="mainTitle">Production Flow Board — Grid Tiles</span>
+      <span class="status" id="netStatus"><span class="dot bad" id="dot"></span><span id="statusText">Offline</span></span>
+    </div>
+    
+  </header>
+<button id="exportStateBtn" class="btn secondary" type="button">Export Board</button>
+<button id="importStateBtn" class="btn secondary" type="button">Import Board</button>
+ <button id="exportSnapshotBtn" class="btn secondary" type="button">Download Snapshot CSV</button>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="board">Board</button>
+    <button class="tab" data-tab="issues">Issues</button>
+    <button class="tab" data-tab="log">Log</button>
+    <div class="selbar">
+      <button id="selectModeBtn" class="toggle">Select Mode</button>
+      <span class="badge-sel" id="selCount">Selected: 0</span>
+      <button id="clearSelBtn" class="btn secondary" disabled>Clear Selection</button>
+<button id="bulkReadyBtn" class="btn ok" type="button">Green</button>
+<button id="bulkIssueBtn" class="btn" type="button">Red</button>
+<button id="bulkProgressBtn" class="btn secondary" type="button">Yellow</button>
+<button id="bulkEmptyBtn" class="btn muted" type="button">White</button>
+    </div>
+  </div>
+
+  <div class="keybar">
+    <div class="keyitem"><span class="sw red"></span> Red — Issues</div>
+    <div class="keyitem"><span class="sw green"></span> Green — Stocked</div>
+    <div class="keyitem"><span class="sw yellow"></span> Yellow — In Progress</div>
+    <div class="keyitem"><span class="sw white"></span> White — Unused</div>
+   
+
+<input id="importStateFile" type="file" accept=".json" hidden />
+    <button id="manageBoardBtn" class="btn secondary" type="button">Manage Boards</button>
+    <span id="boardLinks"></span>
+  </div>
+
+  <div class="addbar" id="globalAddBar">
+    <div class="group">
+      <label>Add to →</label>
+      <select id="addLocSel"></select>
+      <span>/</span>
+      <select id="addSecSel"></select>
+      
+    </div>
+    <div class="group">
+     <label>Qty:</label>
+<input id="batchQty" type="number" value="10" min="1" />
+      <label class="checkbox"><input id="batchReady" type="checkbox" /><span>Mark Ready</span></label>
+      <button id="batchBtn" class="btn">Add # of Cards</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div id="panel-board" class="panel active"><div id="locations" class="locations"></div></div>
+    <div id="panel-issues" class="panel">
+      <div class="issues">
+        <div class="issues-header"><div class="issues-total">Total Issues: <span id="issuesTotal">0</span></div></div>
+        <div class="issues-table" id="issuesTable"><div class="issues-row head"><div>Card</div><div>Location</div><div>Section</div><div>Issue</div><div></div></div></div>
+      </div>
+    </div>
+    <div id="panel-log" class="panel">
+      <div class="log">
+        <div class="log-header"><button id="exportCsvBtn" class="btn secondary">Export CSV</button><div class="small">Daily aggregated moves (From → To)</div></div>
+        <div class="log-table"><div class="log-row head"><div>Date</div><div>From</div><div>To</div><div>Count</div></div><div id="logBody"></div></div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="managerModal" class="manager-modal" hidden>
+    <div class="manager-card">
+      <div class="manager-head">
+        <div>
+          <div class="manager-title">Board Manager</div>
+          <div class="small">Create boards, rename locations, add sections, and set section limits.</div>
+        </div>
+        <button id="closeManagerBtn" class="btn secondary" type="button">Close</button>
+      </div>
+
+      <div class="manager-grid">
+        <div class="manager-panel">
+          <div class="manager-row">
+            <label>Board Key</label>
+            <input id="mgrBoardKey" type="text" readonly />
+          </div>
+          <div class="manager-row">
+            <label>Banner</label>
+            <input id="mgrBanner" type="text" />
+          </div>
+          <div class="manager-row">
+            <label>Title</label>
+            <input id="mgrTitle" type="text" />
+          </div>
+          <div class="manager-row">
+            <button id="saveBoardMetaBtn" class="btn" type="button">Save Board Settings</button>
+            <button id="createBoardBtn" class="btn secondary" type="button">New Board</button>
+            <button id="deleteBoardBtn" class="btn muted">Delete Board</button>
+          </div>
+          <div class="manager-row">
+            <label>Open Board Key</label>
+            <input id="openBoardKey" type="text" placeholder="example: my-board" />
+            <button id="openBoardBtn" class="btn secondary" type="button">Open</button>
+          </div>
+        </div>
+
+        <div class="manager-panel">
+          <div class="manager-head-inline">
+            <div class="manager-title">Locations & Sections</div>
+            <button id="addLocationBtn" class="btn" type="button">Add Location</button>
+          </div>
+          <div id="locationEditorList" class="location-editor-list"></div>
+          <div class="manager-row">
+            <button id="saveStructureBtn" class="btn ok" type="button">Save Structure</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<footer>© G&amp;S Bar &amp; Wire</footer>
+
+<script>
+(function(){
+  const BASE = location.origin;
+  const STORAGE_KEY = 'unified_board_registry_v1';
+  const DEFAULT_BOARD_KEY = new URLSearchParams(location.search).get('board') || 'split';
+
+  const PRESETS = {
+    split: {
+      banner:'AMD Niti Split Coil',
+      title:'Production Flow Board — Grid Tiles',
+      config:[
+        { id:'amd', title:'AMD', sections:[
+          { id:'amdUnused', title:'Unused' },{ id:'compacts', title:'Compacts' },{ id:'melt', title:'Melt' },{ id:'ingotConv', title:'Ingot Conversion' },{ id:'billet', title:'Billet' }
+        ]},
+        { id:'gs', title:'G&S', sections:[
+          { id:'gsUnused', title:'Unused' },{ id:'coilConv', title:'Coil Conversion' },{ id:'blast', title:'Shot Blast/Test' },
+          { id:'p250HrcN15', title:'.250" HRC Split' },{ id:'p250HrcN25', title:'.250" HRC N25' },
+          { id:'p250AnnN15', title:'.136" Hot Draw Split' },{ id:'p250AnnN25', title:'.250" Annealed Split' },
+          { id:'p136HotN15', title:'.136" Hot Drawn Split' },{ id:'p136HotN25', title:'.136" Hot Drawn N25' }
+        ]},
+        { id:'ferg', title:'Ferguson', sections:[
+          { id:'ferg240AnnN15', title:'.240" Annealed N15' },{ id:'ferg240AnnN25', title:'.240" Annealed N25' },
+          { id:'ferg136HotN15', title:'.085" Cold Draw Split' },{ id:'ferg136HotN25', title:'.085" Cold Draw Split' }
+        ]},
+        { id:'aba', title:'ABA', sections:[
+          { id:'abaUnusedN15', title:'.085" Cold Drawn Split' },{ id:'abaUnusedN25', title:'.085" N25' },{ id:'aba057N15', title:'.057" N15' },{ id:'aba057N25', title:'.057" N25' }
+        ]}
+      ],
+      seed(sections, add){
+        sections.compacts.push(add('compacts',1,'ready'),add('compacts',2,'ready'),add('compacts',3,'ready'),add('compacts',4,'ready'));
+        sections.melt.push(add('melt',5,'empty'),add('melt',6,'issue'));
+        sections.ingotConv.push(add('ingotConv',7,'ready'),add('ingotConv',8,'issue'),add('ingotConv',9,'progress'));
+        sections.billet.push(add('billet',10,'ready'));
+        sections.coilConv.push(add('coilConv',11,'ready'));
+        sections.blast.push(add('blast',12,'issue'));
+        sections.p250HrcN15.push(add('p250HrcN15',13,'progress'));
+        sections.p250AnnN15.push(add('p250AnnN15',14,'ready'));
+        sections.ferg136HotN15.push(add('ferg136HotN15',15,'issue'));
+        sections.ferg136HotN25.push(add('ferg136HotN25',16,'ready'));
+      },
+      thresholds:{amd:0,gs:0,ferg:0,aba:0}
+    },
+    saes: {
+      banner:'SAES Niti #1 ONLY',
+      title:'SAES Production Flow — Grid Tiles',
+      config:[
+        { id:'gs', title:'G&S', sections:[
+          { id:'gsUnused', title:'SAES Unused' },{ id:'gs250Hrc', title:'SAES .250" HRC' },{ id:'gsHotDraw', title:'SAES .136" Hot Draw' }
+        ]},
+        { id:'ferg', title:'Ferguson', sections:[
+          { id:'fergUnusedN15', title:'SAES Unused' },{ id:'ferg240AnnN15', title:'SAES .240" N15 Annealed' },
+          { id:'ferg240AnnN25', title:'SAES .240" N25 Annealed' },{ id:'ferg108HotN15', title:'SAES .108" Cold Draw N15' },{ id:'ferg108HotN25', title:'SAES .108" Cold Draw N25' }
+        ]},
+        { id:'aba', title:'ABA', sections:[
+          { id:'abaUnusedN15', title:'SAES Unused' },{ id:'aba085N25', title:'SAES .085" N25' },{ id:'aba085N15', title:'SAES .085" N15' },
+          { id:'aba057N25', title:'SAES .057" N25' },{ id:'aba057N15', title:'SAES .057" N15' }
+        ]}
+      ],
+      seed(sections, add){
+        sections.gs250Hrc.push(add('gs250Hrc',13,'progress'));
+        sections.gsHotDraw.push(add('gsHotDraw',14,'ready'));
+      },
+      thresholds:{gs:0,ferg:0,aba:0}
+    },
+    amd1: {
+      banner:'AMD Niti #1',
+      title:'Production Flow Board — Grid Tiles',
+      config:[
+        { id:'amd', title:'AMD', sections:[
+          { id:'amdUnused', title:'Unused' },{ id:'compacts', title:'Compacts' },{ id:'melt', title:'Melt' },{ id:'ingotConv', title:'Ingot Conversion' },{ id:'billet', title:'Billet' }
+        ]},
+        { id:'gs', title:'G&S', sections:[
+          { id:'gsUnused', title:'Unused' },{ id:'coilConv', title:'Coil Conversion' },{ id:'blast', title:'Shot Blast/Test' },
+          { id:'p250HrcN15', title:'.250" HRC N15' },{ id:'p250HrcN25', title:'.250" HRC N25' },
+          { id:'p250AnnN15', title:'.250" Annealed N15' },{ id:'p250AnnN25', title:'.250" Annealed N25' },
+          { id:'p136HotN15', title:'.136" Hot Drawn N15' },{ id:'p136HotN25', title:'.136" Hot Drawn N25' }
+        ]},
+        { id:'ferg', title:'Ferguson', sections:[
+          { id:'ferg240AnnN15', title:'.240" Annealed N15' },{ id:'ferg240AnnN25', title:'.240" Annealed N25' },
+          { id:'ferg136HotN15', title:'.108" Hot Draw N15' },{ id:'ferg136HotN25', title:'.108" Hot Draw N25' }
+        ]},
+        { id:'aba', title:'ABA', sections:[
+          { id:'abaUnusedN15', title:'.085" N15' },{ id:'abaUnusedN25', title:'.085" N25' },{ id:'aba057N15', title:'.057" N15' },{ id:'aba057N25', title:'.057" N25' }
+        ]}
+      ],
+      seed(sections, add){
+        sections.compacts.push(add('compacts',1,'ready'),add('compacts',2,'ready'),add('compacts',3,'ready'),add('compacts',4,'ready'));
+        sections.melt.push(add('melt',5,'empty'),add('melt',6,'issue'));
+        sections.ingotConv.push(add('ingotConv',7,'ready'),add('ingotConv',8,'issue'),add('ingotConv',9,'progress'));
+        sections.billet.push(add('billet',10,'ready'));
+        sections.coilConv.push(add('coilConv',11,'ready'));
+        sections.blast.push(add('blast',12,'issue'));
+        sections.p250HrcN15.push(add('p250HrcN15',13,'progress'));
+        sections.p136HotN15.push(add('p136HotN15',14,'ready'));
+        sections.ferg136HotN15.push(add('ferg136HotN15',15,'issue'));
+        sections.ferg136HotN25.push(add('ferg136HotN25',16,'ready'));
+      },
+      thresholds:{amd:0,gs:0,ferg:0,aba:0}
+    }
+  };
+
+  const boardLinksEl = document.getElementById('boardLinks');
+  const topBannerEl = document.getElementById('topBanner');
+  const mainTitleEl = document.getElementById('mainTitle');
+  const wrap = document.getElementById('locations');
+
+  const managerModal = document.getElementById('managerModal');
+  const locationEditorList = document.getElementById('locationEditorList');
+  const mgrBoardKey = document.getElementById('mgrBoardKey');
+  const mgrBanner = document.getElementById('mgrBanner');
+  const mgrTitle = document.getElementById('mgrTitle');
+  const openBoardKey = document.getElementById('openBoardKey');
+
+  let boardKey = DEFAULT_BOARD_KEY;
+  let activeConfig = [];
+  let LOC_TITLES = {}, SEC_TITLES = {}, SEC_TO_LOC = {};
+  let state = null;
+  let applyingRemote = false, saveTimer = null;
+  let selectMode = false;
+  const selection = new Set();
+
+  function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+  function slugify(text){
+    return String(text || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g,'-')
+      .replace(/^-+|-+$/g,'') || ('item-' + Math.random().toString(36).slice(2,7));
+  }
+ async function loadRegistry(){
+  try{
+    const res = await fetch(`${BASE}/registry`);
+    const parsed = await res.json();
+    if(!parsed.customBoards) parsed.customBoards = {};
+    return parsed;
+  }catch{
+    return { customBoards:{} };
+  }
+}
+
+async function saveRegistry(reg){
+  await fetch(`${BASE}/registry`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(reg)
+  });
+}
+
+  function getPreset(key){ return PRESETS[key] || null; }
+
+  function createSeedFromConfig(meta, presetSeed, presetThresholds){
+    const cards = {};
+    function add(sec, n, status='ready'){ const id = `${sec}-H${n}`; cards[id] = {id, title:`Card ID ${n}`, status}; return id; }
+    const sections = {};
+    (meta.config || []).forEach(loc => (loc.sections || []).forEach(sec => { sections[sec.id] = []; }));
+    if(typeof presetSeed === 'function') presetSeed(sections, add);
+    const thresholds = {};
+    (meta.config || []).forEach(loc => { thresholds[loc.id] = (presetThresholds && Number.isFinite(presetThresholds[loc.id])) ? presetThresholds[loc.id] : 0; });
+    return { meta: deepClone(meta), cards, sections, thresholds, moves:{} };
+  }
+
+  async function getDefaultStateForBoard(key){
+  const preset = getPreset(key);
+  if(preset){
+    const meta = { boardKey:key, banner:preset.banner, title:preset.title, config:deepClone(preset.config) };
+    return createSeedFromConfig(meta, preset.seed, preset.thresholds);
+  }
+
+  async function getDefaultStateForBoard(key){
+  const preset = getPreset(key);
+  if(preset){
+    const meta = { boardKey:key, banner:preset.banner, title:preset.title, config:deepClone(preset.config) };
+    return createSeedFromConfig(meta, preset.seed, preset.thresholds);
+  }
+
+  const reg = await loadRegistry();
+  const regBoard = reg.customBoards[key];
+
+  const meta = regBoard ? {
+    boardKey:key,
+    banner:regBoard.banner,
+    title:regBoard.title,
+    config:deepClone(regBoard.config)
+  } : {
+    boardKey:key,
+    banner:'New Board',
+    title:'Production Flow Board — Grid Tiles',
+    config:[]
+  };
+
+  return createSeedFromConfig(meta, null, {});
+}
+   const reg = await loadRegistry();
+    const regBoard = reg.customBoards[key];
+    const meta = regBoard ? { boardKey:key, banner:regBoard.banner, title:regBoard.title, config:deepClone(regBoard.config) } : {
+      boardKey:key,
+      banner:'New Board',
+      title:'Production Flow Board — Grid Tiles',
+      config:[]
+    };
+    return createSeedFromConfig(meta, null, {});
+  }
+
+  function normalizeState(raw){
+    const next = raw && typeof raw === 'object' ? deepClone(raw) : {};
+    if(!next.meta || !Array.isArray(next.meta.config)){
+      return getDefaultStateForBoard(boardKey);
+    }
+    next.meta.boardKey = boardKey;
+    next.cards = next.cards || {};
+    next.sections = next.sections || {};
+    next.thresholds = next.thresholds || {};
+    next.moves = next.moves || {};
+
+    const validSectionIds = new Set();
+    (next.meta.config || []).forEach(loc => {
+      if(!loc.id) loc.id = slugify(loc.title || 'location');
+      next.thresholds[loc.id] = Number.isFinite(next.thresholds[loc.id]) ? next.thresholds[loc.id] : 0;
+      loc.sections = Array.isArray(loc.sections) ? loc.sections : [];
+      loc.sections.forEach(sec => {
+        if(!sec.id) sec.id = slugify(sec.title || 'section');
+        validSectionIds.add(sec.id);
+        next.sections[sec.id] = Array.isArray(next.sections[sec.id]) ? next.sections[sec.id] : [];
+        if(sec.limit !== undefined && sec.limit !== null && sec.limit !== ''){
+          const lim = parseInt(sec.limit, 10);
+          sec.limit = Number.isFinite(lim) && lim > 0 ? lim : '';
+        }else{
+          sec.limit = '';
+        }
+      });
+    });
+
+    Object.keys(next.sections).forEach(secId => {
+      if(!validSectionIds.has(secId)) delete next.sections[secId];
+    });
+
+    Object.keys(next.cards).forEach(cardId => {
+      const exists = Array.from(validSectionIds).some(secId => (next.sections[secId] || []).includes(cardId));
+      if(!exists) delete next.cards[cardId];
+    });
+
+    return next;
+  }
+
+  function rebuildLookups(){
+    activeConfig = state.meta.config || [];
+    LOC_TITLES = {}; SEC_TITLES = {}; SEC_TO_LOC = {};
+    activeConfig.forEach(loc => {
+      LOC_TITLES[loc.id] = loc.title;
+      (loc.sections || []).forEach(sec => {
+        SEC_TITLES[sec.id] = sec.title;
+        SEC_TO_LOC[sec.id] = loc.id;
+      });
+    });
+  }
+
+  function updateHeader(){
+    topBannerEl.textContent = state.meta.banner || 'Unified Board';
+    mainTitleEl.textContent = state.meta.title || 'Production Flow Board — Grid Tiles';
+  }
+
+ async function renderBoardLinks(){
+  const reg = await loadRegistry();
+  const builtIns = [
+    ['split','Split Coil'],
+    ['saes','SAES'],
+    ['amd1','AMD Niti #1']
+  ];
+
+  boardLinksEl.innerHTML = '';
+
+  builtIns.forEach(([key,label]) => {
+    const a = document.createElement('a');
+    a.className = 'btn' + (boardKey === key ? ' ok' : '');
+    a.href = `?board=${encodeURIComponent(key)}`;
+    a.textContent = label;
+    boardLinksEl.appendChild(a);
+  });
+
+  Object.entries(reg.customBoards || {}).forEach(([key,meta]) => {
+    const a = document.createElement('a');
+    a.className = 'btn' + (boardKey === key ? ' ok' : '');
+    a.href = `?board=${encodeURIComponent(key)}`;
+    a.textContent = meta.banner || key;
+    boardLinksEl.appendChild(a);
+  });
+}
+
+  function setStatus(text, level){
+    document.getElementById('statusText').textContent = text;
+    document.getElementById('dot').className = 'dot ' + (level || 'bad');
+  }
+
+  async function saveRemote(){
+    if(applyingRemote) return;
+    try{
+      await fetch(`${BASE}/patch?board=${encodeURIComponent(boardKey)}`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({state})
+      });
+    }catch{}
+  }
+
+  function saveSoon(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveRemote, 150);
+  }
+
+  function connect(){
+    try{
+      if(location.protocol.startsWith('http')){
+        const es = new EventSource(`${BASE}/events?board=${encodeURIComponent(boardKey)}`);
+        setStatus('Connecting…','warn');
+        es.onmessage = ev => {
+          try{
+            const msg = JSON.parse(ev.data || '{}');
+            if(msg && (msg.type === 'hello' || msg.type === 'patch')){
+              applyingRemote = true;
+              state = normalizeState(msg.state);
+              rebuildLookups();
+              updateHeader();
+              populateAddSelectors();
+              render();
+              applyingRemote = false;
+              setStatus('Connected','ok');
+            }
+          }catch{}
+        };
+        es.onerror = () => setStatus('Offline','bad');
+      }else{
+        setStatus('Offline','bad');
+      }
+    }catch{
+      setStatus('Offline','bad');
+    }
+  }
+
+  const tabs = document.querySelectorAll('.tab[data-tab]');
+  const panels = {
+    board: document.getElementById('panel-board'),
+    issues: document.getElementById('panel-issues'),
+    log: document.getElementById('panel-log')
+  };
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const dst = t.dataset.tab;
+    if(!dst || !panels[dst]) return;
+    Object.values(panels).forEach(p => p && p.classList.remove('active'));
+    panels[dst].classList.add('active');
+    if(dst === 'issues') updateIssuesPanel();
+    if(dst === 'log') updateLogPanel();
+  }));
+
+  const selectBtn = document.getElementById('selectModeBtn');
+  const selCount = document.getElementById('selCount');
+  const clearSelBtn = document.getElementById('clearSelBtn');
+const bulkReadyBtn = document.getElementById('bulkReadyBtn');
+const bulkIssueBtn = document.getElementById('bulkIssueBtn');
+const bulkProgressBtn = document.getElementById('bulkProgressBtn');
+const bulkEmptyBtn = document.getElementById('bulkEmptyBtn');
+  selectBtn.addEventListener('click', () => { selectMode = !selectMode; updateSelectionUI(); applySelectionDecor(); });
+  clearSelBtn.addEventListener('click', () => { selection.clear(); updateSelectionUI(); applySelectionDecor(); });
+
+bulkReadyBtn.addEventListener('click', () => setSelectedCardsStatus('ready'));
+bulkIssueBtn.addEventListener('click', () => setSelectedCardsStatus('issue'));
+bulkProgressBtn.addEventListener('click', () => setSelectedCardsStatus('progress'));
+bulkEmptyBtn.addEventListener('click', () => setSelectedCardsStatus('empty'));
+  function updateSelectionUI(){
+  const hasSelection = selection.size > 0;
+  selCount.textContent = 'Selected: ' + selection.size;
+  clearSelBtn.disabled = !hasSelection;
+  selectBtn.classList.toggle('on', selectMode);
+
+  if (bulkReadyBtn) bulkReadyBtn.disabled = !hasSelection;
+  if (bulkIssueBtn) bulkIssueBtn.disabled = !hasSelection;
+  if (bulkProgressBtn) bulkProgressBtn.disabled = !hasSelection;
+  if (bulkEmptyBtn) bulkEmptyBtn.disabled = !hasSelection;
+}
+
+  const addLocSel = document.getElementById('addLocSel');
+  const addSecSel = document.getElementById('addSecSel');
+  const batchReady = document.getElementById('batchReady');
+  const batchBtn = document.getElementById('batchBtn');
+
+  function populateAddSelectors(){
+    addLocSel.innerHTML = '';
+    activeConfig.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id;
+      opt.textContent = loc.title;
+      addLocSel.appendChild(opt);
+    });
+    if(addLocSel.options.length) addLocSel.selectedIndex = 0;
+    refreshSectionsForSelectedLoc();
+  }
+
+  function refreshSectionsForSelectedLoc(){
+    const locId = addLocSel.value;
+    const loc = activeConfig.find(l => l.id === locId);
+    addSecSel.innerHTML = '';
+    (loc?.sections || []).forEach(sec => {
+      const opt = document.createElement('option');
+      opt.value = sec.id;
+      opt.textContent = sec.title;
+      addSecSel.appendChild(opt);
+    });
+    if(addSecSel.options.length) addSecSel.selectedIndex = 0;
+  }
+  addLocSel.addEventListener('change', refreshSectionsForSelectedLoc);
+
+ 
+   batchBtn.addEventListener('click', () => {
+  const qty = parseInt(document.getElementById('batchQty').value, 10);
+  const ready = batchReady.checked;
+  const secId = addSecSel.value;
+
+  if (!secId) return alert('Choose a section first.');
+  if (!qty || qty <= 0 || qty > 5000) return alert('Enter a valid quantity (max 5000).');
+
+  for (let i = 0; i < qty; i++) {
+    const id = secId + '-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+
+    state.cards[id] = {
+      id,
+      title: id,
+      status: ready ? 'ready' : 'empty'
+    };
+
+    (state.sections[secId] ||= []).push(id);
+  }
+
+  render();
+  saveSoon();
+});  
+
+  function buildLocation(loc){
+    const el = document.createElement('div');
+    el.className = 'location';
+    el.dataset.locId = loc.id;
+
+    const header = document.createElement('div');
+    header.className = 'loc-header';
+
+    const left = document.createElement('div');
+    left.className = 'loc-title';
+    left.textContent = loc.title;
+
+    const tools = document.createElement('div');
+    tools.className = 'loc-tools';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'small';
+    lbl.textContent = 'Target';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.className = 'thresh';
+    input.value = (state.thresholds && Number.isFinite(state.thresholds[loc.id])) ? state.thresholds[loc.id] : 0;
+    input.dataset.locThresh = loc.id;
+    input.addEventListener('change', () => {
+      const v = parseInt(input.value, 10);
+      state.thresholds[loc.id] = Number.isFinite(v) && v >= 0 ? v : 0;
+      saveSoon();
+      render();
+    });
+
+    const ind = document.createElement('span');
+    ind.className = 'loc-ind';
+    ind.dataset.locInd = loc.id;
+
+    const total = document.createElement('div');
+    total.className = 'badge';
+    total.dataset.locCount = loc.id;
+    total.textContent = '0';
+
+    tools.append(lbl, input, ind, total);
+    header.append(left, tools);
+
+    const sections = document.createElement('div');
+    sections.className = 'sections';
+    (loc.sections || []).forEach(sec => sections.appendChild(buildSection(loc, sec)));
+
+    el.append(header, sections);
+    return el;
+  }
+
+  function buildSection(loc, sec){
+    const el = document.createElement('div');
+    el.className = 'section';
+    el.dataset.sectionId = sec.id;
+    el.dataset.locId = loc.id;
+
+    const header = document.createElement('div');
+    header.className = 'section-header';
+
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.textContent = sec.title;
+
+    const actions = document.createElement('div');
+    actions.className = 'section-actions';
+
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'btn muted';
+    clearBtn.type = 'button';
+    clearBtn.textContent = 'Clr';
+    clearBtn.addEventListener('click', () => clearSection(sec.id));
+
+    const readyBtn = document.createElement('button');
+    readyBtn.className = 'btn secondary';
+    readyBtn.type = 'button';
+    readyBtn.textContent = 'All Ready';
+    readyBtn.addEventListener('click', () => setSectionStatus(sec.id, 'ready'));
+
+    const count = document.createElement('div');
+    count.className = 'badge';
+    count.dataset.secCount = sec.id;
+    count.textContent = '0';
+
+    actions.append(clearBtn, readyBtn, count);
+    header.append(title, actions);
+
+    const list = document.createElement('div');
+    list.className = 'list';
+    list.dataset.listFor = sec.id;
+
+    [el, list].forEach(target => {
+      target.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drop-target'); });
+      target.addEventListener('dragleave', () => el.classList.remove('drop-target'));
+      target.addEventListener('drop', e => {
+        e.preventDefault();
+        el.classList.remove('drop-target');
+        const firstId = e.dataTransfer.getData('text/plain');
+        const group = (window.__dragGroup && window.__dragGroup.length) ? Array.from(new Set(window.__dragGroup)) : (firstId ? [firstId] : []);
+        if(group.length) moveGroup(group, sec.id);
+        window.__dragGroup = null;
+      });
+    });
+
+    el.append(header, list);
+    return el;
+  }
+
+  function buildTile(card){
+    const el = document.createElement('div');
+    el.className = 'tile ' + (card.status || 'empty');
+    el.draggable = true;
+    el.id = card.id;
+    el.title = card.title;
+    if(selection.has(card.id)) el.classList.add('selected');
+
+    el.addEventListener('dragstart', e => {
+      el.classList.add('dragging');
+      const group = selection.has(card.id) ? Array.from(selection) : [card.id];
+      window.__dragGroup = group;
+      e.dataTransfer.setData('text/plain', card.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+
+    el.addEventListener('click', e => {
+      if(selectMode || e.ctrlKey || e.metaKey){
+        toggleSelect(card.id);
+      }else{
+        const order = ['ready','issue','progress','empty'];
+        const cur = state.cards[card.id].status || 'empty';
+        state.cards[card.id].status = order[(order.indexOf(cur) + 1) % order.length];
+        saveSoon();
+        render();
+      }
+    });
+
+    const x = document.createElement('div');
+    x.textContent = '×';
+    x.className = 'x';
+    x.addEventListener('click', e => { e.stopPropagation(); deleteCard(card.id); });
+    el.appendChild(x);
+
+    return el;
+  }
+
+  function upsertCardToSection(id, title, sectionId, status){
+    if(!state.cards[id]) state.cards[id] = {id, title, status};
+    else {
+      state.cards[id].title = title;
+      if(status) state.cards[id].status = status;
+    }
+    Object.keys(state.sections).forEach(k => {
+      state.sections[k] = (state.sections[k] || []).filter(x => x !== id);
+    });
+    (state.sections[sectionId] ||= []).push(id);
+  }
+
+  function setSectionStatus(sectionId, status){
+    (state.sections[sectionId] || []).forEach(id => {
+      if(state.cards[id]) state.cards[id].status = status;
+    });
+    saveSoon();
+    render();
+  }
+
+  function clearSection(sectionId){
+    const ids = state.sections[sectionId] || [];
+    if(!ids.length || !confirm('Delete all cards in this section?')) return;
+    ids.forEach(id => delete state.cards[id]);
+    state.sections[sectionId] = [];
+    saveSoon();
+    render();
+  }
+
+  function moveGroup(ids, dst){
+    const prevById = {};
+    Object.entries(state.sections).forEach(([secId, arr]) => {
+      arr.forEach(cid => { if(ids.includes(cid)) prevById[cid] = secId; });
+    });
+    Object.keys(state.sections).forEach(k => {
+      state.sections[k] = (state.sections[k] || []).filter(id => !ids.includes(id));
+    });
+    (state.sections[dst] ||= []).push(...ids);
+
+    const day = new Date().toISOString().slice(0,10);
+    state.moves[day] = state.moves[day] || {};
+    ids.forEach(cid => {
+      const from = prevById[cid];
+      if(from && from !== dst){
+        const key = from + '|' + dst;
+        state.moves[day][key] = (state.moves[day][key] || 0) + 1;
+      }
+    });
+    selection.clear();
+    saveSoon();
+    render();
+  }
+
+  function deleteCard(id){
+    Object.keys(state.sections).forEach(k => {
+      state.sections[k] = (state.sections[k] || []).filter(x => x !== id);
+    });
+    delete state.cards[id];
+    selection.delete(id);
+    saveSoon();
+    render();
+  }
+
+
+function setSelectedCardsStatus(status){
+  if (!selection.size) return;
+
+  selection.forEach(id => {
+    if (state.cards[id]) {
+      state.cards[id].status = status;
+    }
+  });
+
+  saveSoon();
+  render();
+}
+  function render(){
+    wrap.innerHTML = '';
+    activeConfig.forEach(loc => wrap.appendChild(buildLocation(loc)));
+
+    activeConfig.forEach(loc => {
+      let locTotal = 0;
+      (loc.sections || []).forEach(sec => {
+        const list = wrap.querySelector(`[data-list-for="${sec.id}"]`);
+        if(list){
+          list.innerHTML = '';
+          (state.sections[sec.id] || []).forEach(id => {
+            const card = state.cards[id];
+            if(card) list.appendChild(buildTile(card));
+          });
+        }
+        const c = wrap.querySelector(`[data-sec-count="${sec.id}"]`);
+        const cnt = (state.sections[sec.id] || []).length;
+        if(c) c.textContent = sec.limit ? `${cnt}/${sec.limit}` : String(cnt);
+        const sectionEl = wrap.querySelector(`[data-section-id="${sec.id}"]`);
+        if(sectionEl){
+          sectionEl.classList.toggle('over-limit', !!(sec.limit && cnt > Number(sec.limit)));
+        }
+        const isUnused = /unused/i.test(sec.title) || /unused/i.test(sec.id);
+        if(!isUnused) locTotal += cnt;
+      });
+      const lc = wrap.querySelector(`[data-loc-count="${loc.id}"]`);
+      if(lc) lc.textContent = String(locTotal);
+      const ind = wrap.querySelector(`[data-loc-ind="${loc.id}"]`);
+      const threshold = Number.isFinite(state.thresholds[loc.id]) ? state.thresholds[loc.id] : 0;
+      if(ind){
+        ind.classList.remove('good','bad');
+        const ok = locTotal >= threshold;
+        ind.classList.add(ok ? 'good' : 'bad');
+        ind.textContent = ok ? 'OK' : 'Below';
+        ind.title = `Total ${locTotal} vs target ${threshold}`;
+      }
+    });
+
+   
+    if(document.getElementById('panel-issues').classList.contains('active')) updateIssuesPanel();
+    if(document.getElementById('panel-log').classList.contains('active')) updateLogPanel();
+  }
+
+  function applySelectionDecor(){
+    document.querySelectorAll('.tile').forEach(t => t.classList.toggle('selected', selection.has(t.id)));
+  }
+
+  function toggleSelect(id){
+    if(selection.has(id)) selection.delete(id);
+    else selection.add(id);
+    updateSelectionUI();
+    applySelectionDecor();
+  }
+
+  let marqueeEl = null, marqueeStart = null, marqueeAppend = false, marqueeSeed = [];
+  const boardPanel = document.getElementById('panel-board');
+  boardPanel.addEventListener('mousedown', e => {
+    if(!(selectMode || e.shiftKey)) return;
+    if(e.button !== 0) return;
+    if(e.target.closest('.tile')) return;
+    marqueeAppend = e.ctrlKey || e.metaKey;
+    marqueeSeed = Array.from(selection);
+    if(!marqueeAppend) selection.clear();
+    applySelectionDecor();
+    marqueeStart = {x:e.clientX, y:e.clientY};
+    marqueeEl = document.createElement('div');
+    marqueeEl.className = 'marquee';
+    boardPanel.appendChild(marqueeEl);
+    const onMove = ev => { updateMarquee(ev.clientX, ev.clientY); applySelectionDecor(); };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      if(marqueeEl){ marqueeEl.remove(); marqueeEl = null; }
+      marqueeStart = null;
+      saveSoon();
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  });
+
+  function updateMarquee(x, y){
+    if(!marqueeEl || !marqueeStart) return;
+    const rB = boardPanel.getBoundingClientRect();
+    const L = Math.min(x, marqueeStart.x), R = Math.max(x, marqueeStart.x), T = Math.min(y, marqueeStart.y), B = Math.max(y, marqueeStart.y);
+    marqueeEl.style.left = (L - rB.left + boardPanel.scrollLeft) + 'px';
+    marqueeEl.style.top = (T - rB.top + boardPanel.scrollTop) + 'px';
+    marqueeEl.style.width = (R - L) + 'px';
+    marqueeEl.style.height = (B - T) + 'px';
+    const hits = [];
+    document.querySelectorAll('.tile').forEach(t => {
+      const r = t.getBoundingClientRect();
+      const ok = !(r.right < L || r.left > R || r.bottom < T || r.top > B);
+      if(ok) hits.push(t.id);
+    });
+    selection.clear();
+    if(marqueeAppend) marqueeSeed.forEach(id => selection.add(id));
+    hits.forEach(id => selection.add(id));
+  }
+
+  function cardToSectionMap(){
+    const m = {};
+    Object.entries(state.sections || {}).forEach(([secId, arr]) => (arr || []).forEach(id => m[id] = secId));
+    return m;
+  }
+
+  function updateIssuesPanel(){
+    const tbl = document.getElementById('issuesTable');
+    const totalEl = document.getElementById('issuesTotal');
+    if(!tbl || !totalEl) return;
+    tbl.querySelectorAll('.issues-row:not(.head)').forEach(n => n.remove());
+
+    const idx = cardToSectionMap();
+    const reds = Object.values(state.cards || {}).filter(c => c && c.status === 'issue');
+    totalEl.textContent = String(reds.length);
+
+    reds.sort((a,b) => (((a.title.match(/(\d+)/) || [0,0])[1]) - ((b.title.match(/(\d+)/) || [0,0])[1])));
+
+    reds.forEach(card => {
+      const sec = idx[card.id];
+      const loc = SEC_TO_LOC[sec];
+      const row = document.createElement('div');
+      row.className = 'issues-row';
+      const cid = (card.title.match(/(\d+)/) || card.id.match(/H(\d+)/) || [,''])[1];
+
+      const dCid = document.createElement('div'); dCid.textContent = cid || '';
+      const dLoc = document.createElement('div'); dLoc.textContent = LOC_TITLES[loc] || '';
+      const dSec = document.createElement('div'); dSec.textContent = SEC_TITLES[sec] || '';
+
+      const input = document.createElement('input');
+      input.className = 'issue-note';
+      input.placeholder = 'Describe issue...';
+      input.value = card.note || '';
+      input.addEventListener('change', () => { state.cards[card.id].note = input.value; saveSoon(); });
+      input.addEventListener('blur', () => { state.cards[card.id].note = input.value; saveSoon(); });
+
+      const act = document.createElement('div');
+      const btn = document.createElement('button');
+      btn.className = 'btn ok';
+      btn.type = 'button';
+      btn.textContent = 'Mark Ready';
+      btn.addEventListener('click', () => { state.cards[card.id].status = 'ready'; saveSoon(); render(); });
+      act.appendChild(btn);
+
+      row.append(dCid, dLoc, dSec, input, act);
+      tbl.appendChild(row);
+    });
+  }
+
+  function computeLogRows(){
+    const rows = [];
+    Object.keys(state.moves || {}).sort().forEach(day => {
+      const pairs = state.moves[day];
+      Object.keys(pairs || {}).forEach(key => {
+        const [from, to] = key.split('|');
+        rows.push({
+          date: day,
+          fromTxt: (SEC_TITLES[from] || from) + ' (' + (LOC_TITLES[SEC_TO_LOC[from]] || '') + ')',
+          toTxt: (SEC_TITLES[to] || to) + ' (' + (LOC_TITLES[SEC_TO_LOC[to]] || '') + ')',
+          count: pairs[key]
+        });
+      });
+    });
+    rows.sort((a,b) => (a.date.localeCompare(b.date)) || a.fromTxt.localeCompare(b.fromTxt) || a.toTxt.localeCompare(b.toTxt));
+    return rows;
+  }
+
+  function updateLogPanel(){
+    const body = document.getElementById('logBody');
+    if(!body) return;
+    body.innerHTML = '';
+    const rows = computeLogRows();
+    if(!rows.length){
+      const empty = document.createElement('div');
+      empty.className = 'small';
+      empty.style.margin = '0 24px';
+      empty.textContent = 'No moves yet.';
+      body.appendChild(empty);
+      return;
+    }
+    rows.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'log-row';
+      row.innerHTML = `<div>${r.date}</div><div>${r.fromTxt}</div><div>${r.toTxt}</div><div>${r.count}</div>`;
+      body.appendChild(row);
+    });
+  }
+
+  function exportSnapshotCSV(){
+    const rows = [['Location','Section','Count','CardIDs']];
+    activeConfig.forEach(loc => {
+      (loc.sections || []).forEach(sec => {
+        const ids = state.sections[sec.id] || [];
+        const cardList = ids.map(id => (id.match(/H(\d+)/) || [])[1] || id).join(' ');
+        rows.push([loc.title, sec.title, String(ids.length), cardList]);
+      });
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${boardKey}_snapshot_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  document.getElementById('exportSnapshotBtn').addEventListener('click', exportSnapshotCSV);
+  document.getElementById('exportCsvBtn').addEventListener('click', exportSnapshotCSV);
+document.getElementById('exportStateBtn').addEventListener('click', exportBoardState);
+
+document.getElementById('importStateBtn').addEventListener('click', () => {
+  document.getElementById('importStateFile').click();
+});
+
+document.getElementById('importStateFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  importBoardStateFromFile(file);
+  e.target.value = '';
+});
+
+  function openManager(){
+    mgrBoardKey.value = boardKey;
+    mgrBanner.value = state.meta.banner || '';
+    mgrTitle.value = state.meta.title || '';
+    openBoardKey.value = '';
+    renderLocationEditor();
+    managerModal.hidden = false;
+  }
+  function closeManager(){ managerModal.hidden = true; }
+const ADMIN_PASSWORD = '4620'; // 🔐 change this
+
+document.getElementById('manageBoardBtn').addEventListener('click', () => {
+  const input = prompt('Enter admin password:');
+
+  if (!input) return;
+
+  if (input !== ADMIN_PASSWORD) {
+    alert('Incorrect password.');
+    return;
+  }
+
+  openManager();
+});
+  document.getElementById('closeManagerBtn').addEventListener('click', closeManager);
+  managerModal.addEventListener('click', e => { if(e.target === managerModal) closeManager(); });
+
+  function renderLocationEditor(){
+    locationEditorList.innerHTML = '';
+    (state.meta.config || []).forEach((loc, locIndex) => {
+      const card = document.createElement('div');
+      card.className = 'editor-location';
+
+      const head = document.createElement('div');
+      head.className = 'editor-location-head';
+
+      const locName = document.createElement('input');
+      locName.value = loc.title || '';
+      locName.placeholder = 'Location name';
+      locName.addEventListener('input', () => { state.meta.config[locIndex].title = locName.value; });
+
+      const deleteLocBtn = document.createElement('button');
+      deleteLocBtn.className = 'btn muted';
+      deleteLocBtn.type = 'button';
+      deleteLocBtn.textContent = 'Delete Location';
+      deleteLocBtn.addEventListener('click', () => {
+        if(!confirm(`Delete location "${loc.title}"?`)) return;
+        (loc.sections || []).forEach(sec => {
+          (state.sections[sec.id] || []).forEach(cardId => delete state.cards[cardId]);
+          delete state.sections[sec.id];
+        });
+        delete state.thresholds[loc.id];
+        state.meta.config.splice(locIndex, 1);
+        renderLocationEditor();
+      });
+
+      const addSectionBtn = document.createElement('button');
+      addSectionBtn.className = 'btn secondary';
+      addSectionBtn.type = 'button';
+      addSectionBtn.textContent = 'Add Section';
+      addSectionBtn.addEventListener('click', () => {
+        const name = prompt('Section name?');
+        if(!name) return;
+        const secIdBase = slugify(name);
+        let secId = secIdBase;
+        let i = 2;
+        const used = new Set((loc.sections || []).map(s => s.id));
+        while(used.has(secId)){ secId = `${secIdBase}-${i++}`; }
+        loc.sections.push({ id: secId, title: name, limit: '' });
+        state.sections[secId] = [];
+        renderLocationEditor();
+      });
+
+      head.append(locName, addSectionBtn, deleteLocBtn);
+      card.appendChild(head);
+
+      const sectionList = document.createElement('div');
+      sectionList.className = 'editor-section-list';
+
+      (loc.sections || []).forEach((sec, secIndex) => {
+        const row = document.createElement('div');
+        row.className = 'editor-section';
+
+        const secName = document.createElement('input');
+        secName.value = sec.title || '';
+        secName.placeholder = 'Section name';
+        secName.addEventListener('input', () => { loc.sections[secIndex].title = secName.value; });
+
+        const limit = document.createElement('input');
+        limit.type = 'number';
+        limit.min = '0';
+        limit.placeholder = 'Limit';
+        limit.value = sec.limit || '';
+        limit.addEventListener('input', () => {
+          const v = parseInt(limit.value, 10);
+          loc.sections[secIndex].limit = Number.isFinite(v) && v > 0 ? v : '';
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn muted';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => {
+          if(!confirm(`Delete section "${sec.title}"?`)) return;
+          (state.sections[sec.id] || []).forEach(cardId => delete state.cards[cardId]);
+          delete state.sections[sec.id];
+          loc.sections.splice(secIndex, 1);
+          renderLocationEditor();
+        });
+
+        row.append(secName, limit, deleteBtn);
+        sectionList.appendChild(row);
+      });
+
+      card.appendChild(sectionList);
+      locationEditorList.appendChild(card);
+    });
+  }
+
+  document.getElementById('addLocationBtn').addEventListener('click', () => {
+    const name = prompt('Location name?');
+    if(!name) return;
+    const base = slugify(name);
+    let id = base;
+    let i = 2;
+    const used = new Set((state.meta.config || []).map(l => l.id));
+    while(used.has(id)){ id = `${base}-${i++}`; }
+    state.meta.config.push({ id, title:name, sections:[] });
+    state.thresholds[id] = 0;
+    renderLocationEditor();
+  });
+
+  document.getElementById('saveBoardMetaBtn').addEventListener('click', async () => {
+    state.meta.banner = mgrBanner.value.trim() || 'Unified Board';
+    state.meta.title = mgrTitle.value.trim() || 'Production Flow Board — Grid Tiles';
+    const reg = await loadRegistry();
+    if(!getPreset(boardKey)){
+      reg.customBoards[boardKey] = reg.customBoards[boardKey] || { config:[] };
+      reg.customBoards[boardKey].banner = state.meta.banner;
+      reg.customBoards[boardKey].title = state.meta.title;
+      reg.customBoards[boardKey].config = deepClone(state.meta.config || []);
+      await saveRegistry(reg);
+    }
+    updateHeader();
+    renderBoardLinks();
+    saveSoon();
+    closeManager();
+  });
+
+  document.getElementById('saveStructureBtn').addEventListener('click', async () => {
+    state = normalizeState(state);
+    rebuildLookups();
+    populateAddSelectors();
+    render();
+    const reg = await loadRegistry();
+    if(!getPreset(boardKey)){
+      reg.customBoards[boardKey] = {
+        banner: state.meta.banner,
+        title: state.meta.title,
+        config: deepClone(state.meta.config || [])
+      };
+      await saveRegistry(reg);
+    }
+    renderBoardLinks();
+    saveSoon();
+    closeManager();
+  });
+
+  document.getElementById('createBoardBtn').addEventListener('click', async () => {
+    const keyInput = prompt('New board key (used in the URL)?');
+    if(!keyInput) return;
+    const newKey = slugify(keyInput);
+    const banner = prompt('Board banner/title?', 'New Board') || 'New Board';
+    const reg = await loadRegistry();
+    reg.customBoards[newKey] = {
+      banner,
+      title: 'Production Flow Board — Grid Tiles',
+      config: []
+    };
+    await saveRegistry(reg);
+    location.href = `?board=${encodeURIComponent(newKey)}`;
+  });
+
+document.getElementById('deleteBoardBtn').addEventListener('click', async () => {
+// prevent deleting built-in boards
+  if (['split','saes','amd1'].includes(boardKey)) {
+    alert('Cannot delete built-in boards.');
+    return;
+  }
+
+  if (!confirm(`Delete board "${boardKey}"? This cannot be undone.`)) return;
+
+  // remove from registry (this is your saved custom boards)
+  const reg = await loadRegistry();
+  delete reg.customBoards[boardKey];
+  await saveRegistry(reg);
+
+  // OPTIONAL: clear server data (safe even if not used)
+  fetch(`${BASE}/delete?board=${encodeURIComponent(boardKey)}`, {
+    method:'POST'
+  }).catch(()=>{});
+
+  // redirect to safe board
+  location.href = '?board=split';
+});
+  document.getElementById('openBoardBtn').addEventListener('click', () => {
+    const key = slugify(openBoardKey.value);
+    if(!key) return;
+    location.href = `?board=${encodeURIComponent(key)}`;
+  });
+
+  async function init(){
+  await renderBoardLinks();
+  state = await getDefaultStateForBoard(boardKey);
+    rebuildLookups();
+    updateHeader();
+    populateAddSelectors();
+    render();
+    connect();
+  }
+function exportBoardState(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    boardKey,
+    state
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: 'application/json;charset=utf-8;'
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${boardKey}_board_backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importBoardStateFromFile(file){
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+
+      if (!parsed || typeof parsed !== 'object' || !parsed.state) {
+        alert('Invalid backup file.');
+        return;
+      }
+
+      if (!confirm('Import this board backup? This will overwrite the current board state.')) {
+        return;
+      }
+
+      state = normalizeState(parsed.state);
+      rebuildLookups();
+      updateHeader();
+      populateAddSelectors();
+      render();
+      saveSoon();
+
+      alert('Board imported successfully.');
+    } catch (err) {
+      alert('Could not import file. Make sure it is a valid JSON backup.');
+    }
+  };
+
+  reader.readAsText(file);
+}
+  init();
+})();
+</script>
+</body>
+</html>
