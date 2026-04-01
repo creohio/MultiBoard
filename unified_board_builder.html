@@ -365,53 +365,34 @@ async function saveRegistry(reg){
     return { meta: deepClone(meta), cards, sections, thresholds, moves:{} };
   }
 
- };
-    return createSeedFromConfig(meta, preset.seed, preset.thresholds);
-  }
 
-  const reg = await loadRegistry();
-  const regBoard = reg.customBoards[key];
+  async function getDefaultStateForBoard(key){
+    const preset = getPreset(key);
+    if (preset) {
+      const meta = {
+        boardKey: key,
+        banner: preset.banner,
+        title: preset.title,
+        config: deepClone(preset.config)
+      };
+      return createSeedFromConfig(meta, preset.seed, preset.thresholds);
+    }
 
-  const meta = regBoard ? {
-    boardKey: key,
-    banner: regBoard.banner,
-    title: regBoard.title,
-    config: deepClone(regBoard.config)
-  } : {
-    boardKey: key,
-    banner: 'New Board',
-    title: 'Production Flow Board — Grid Tiles',
-    config: []
-  };
-
-  return createSeedFromConfig(meta, null, {});
-}
-
-  const reg = await loadRegistry();
-  const regBoard = reg.customBoards[key];
-
-  const meta = regBoard ? {
-    boardKey:key,
-    banner:regBoard.banner,
-    title:regBoard.title,
-    config:deepClone(regBoard.config)
-  } : {
-    boardKey:key,
-    banner:'New Board',
-    title:'Production Flow Board — Grid Tiles',
-    config:[]
-  };
-
-  return createSeedFromConfig(meta, null, {});
-}
-   const reg = await loadRegistry();
+    const reg = await loadRegistry();
     const regBoard = reg.customBoards[key];
-    const meta = regBoard ? { boardKey:key, banner:regBoard.banner, title:regBoard.title, config:deepClone(regBoard.config) } : {
-      boardKey:key,
-      banner:'New Board',
-      title:'Production Flow Board — Grid Tiles',
-      config:[]
+
+    const meta = regBoard ? {
+      boardKey: key,
+      banner: regBoard.banner,
+      title: regBoard.title,
+      config: deepClone(regBoard.config)
+    } : {
+      boardKey: key,
+      banner: 'New Board',
+      title: 'Production Flow Board — Grid Tiles',
+      config: []
     };
+
     return createSeedFromConfig(meta, null, {});
   }
 
