@@ -365,19 +365,27 @@ async function saveRegistry(reg){
     return { meta: deepClone(meta), cards, sections, thresholds, moves:{} };
   }
 
-  async function getDefaultStateForBoard(key){
-  const preset = getPreset(key);
-  if(preset){
-    const meta = { boardKey:key, banner:preset.banner, title:preset.title, config:deepClone(preset.config) };
+ };
     return createSeedFromConfig(meta, preset.seed, preset.thresholds);
   }
 
-  async function getDefaultStateForBoard(key){
-  const preset = getPreset(key);
-  if(preset){
-    const meta = { boardKey:key, banner:preset.banner, title:preset.title, config:deepClone(preset.config) };
-    return createSeedFromConfig(meta, preset.seed, preset.thresholds);
-  }
+  const reg = await loadRegistry();
+  const regBoard = reg.customBoards[key];
+
+  const meta = regBoard ? {
+    boardKey: key,
+    banner: regBoard.banner,
+    title: regBoard.title,
+    config: deepClone(regBoard.config)
+  } : {
+    boardKey: key,
+    banner: 'New Board',
+    title: 'Production Flow Board — Grid Tiles',
+    config: []
+  };
+
+  return createSeedFromConfig(meta, null, {});
+}
 
   const reg = await loadRegistry();
   const regBoard = reg.customBoards[key];
@@ -410,8 +418,14 @@ async function saveRegistry(reg){
   function normalizeState(raw){
     const next = raw && typeof raw === 'object' ? deepClone(raw) : {};
     if(!next.meta || !Array.isArray(next.meta.config)){
-      return getDefaultStateForBoard(boardKey);
-    }
+  return state || {
+    meta: { boardKey, banner: 'Unified Board', title: 'Production Flow Board — Grid Tiles', config: [] },
+    cards: {},
+    sections: {},
+    thresholds: {},
+    moves: {}
+  };
+}
     next.meta.boardKey = boardKey;
     next.cards = next.cards || {};
     next.sections = next.sections || {};
